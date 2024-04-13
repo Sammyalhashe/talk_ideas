@@ -1,0 +1,39 @@
+#+title: Lockfree Programming
+#+author: Sammy Al Hashemi
+
+* CPU Cores and Threads
+  - A CPU core is where all computations occur on your computer.
+  - It consists of components that let you quickly perform computations (ALU)
+    and temporarily store data (registers).
+  - Modern computers have multiple cores per CPU (you might have heard of
+    dual-core CPU or something like that).
+  - Theoretically, with multiple cores one can execute multiple different
+    processes in parallel.
+  - A thread is a single unit of execution. Processes can ask the OS for
+    multiple threads that can be distributed across multiple cores or even
+    CPUs (NUMA?).
+  - The "core" difference between a CPU Core and a thread is that a CPU Core
+    is the actual hardware that can run different processes in parallel while
+    threads are operating system abstractions that can distribute tasks of
+    single processes in parallel.
+
+* What is thread safety?
+  - Thread safety is a concept that applies to multithreaded code that may
+    modify shared resources.
+  - Thread safe code will only read/modify shared data in a manner that
+    ensures that all threads that access the shared data behave properly and
+    fulfill their design specifications.
+  - Applications use data locks to ensure thread safety.
+  - There are a couple forms of common locks, for example spin-locks and
+    mutexes.
+  - Programmers use locks to protect code that multiple threads access from
+    simultaneous access. This code is called a "critical section".
+*** What are mutexes?
+    - Mutexes are a form a lock that only allows one concurrent access to a
+      shared resource in multithreaded code.
+    - I believe what it does is that it emits instructions to the operating
+      system to literally sleep a running thread until a certain condition is
+      met that allows it to enter a section of code called the "critical
+      section".
+
+
