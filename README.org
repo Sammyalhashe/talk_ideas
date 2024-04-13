@@ -1,0 +1,4 @@
+#+title: Talk Ideas
+#+author: Sammy Al Hashemi
+
+* [[file:./dataOrientedDesign.org][Data Oriented Design]]
