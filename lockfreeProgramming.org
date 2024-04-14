@@ -28,12 +28,68 @@
     mutexes.
   - Programmers use locks to protect code that multiple threads access from
     simultaneous access. This code is called a "critical section".
-*** What are mutexes?
+*** What are mutexes and spinlocks?
     - Mutexes are a form a lock that only allows one concurrent access to a
       shared resource in multithreaded code.
     - I believe what it does is that it emits instructions to the operating
       system to literally sleep a running thread until a certain condition is
       met that allows it to enter a section of code called the "critical
       section".
+    - Only thing to really note here is that calls to the OS can be slow, and
+      especially for mutexes that are not held for that long can drastically
+      decrease performance compared to spinlocks.
+    - Spinlocks on the other hand perform atomic Compare And Swap (CAS)
+      operations, and if it notices if it receives the value it expects, and
+      then just spins in a while loop until it does. The thread stays awake but
+      in this case more CPU cycles will be burned. If it is held too long it
+      would've been better if the thread was just put to sleep.
 
+* Lockfree Programming
+  - Lockfree programming is writing threadsafe code without using locks.
 
+** Brief overview of memory architecture
+   - To fully understand what I am about to say you need some understanding of
+     modern computer memory architecture.
+   - Although RAM speeds have increased over the years, reading from memory
+     itself is considered slow.
+   - To make things more efficient, modern memory architectures have multiple
+     levels of data caches to help speed things up.
+   - [[https://imgs.search.brave.com/qUPp5RsHF-DamMaiXthPAchtPmQqUKRewPRGW76Z6Kg/rs:fit:860:0:0/g:ce/aHR0cHM6Ly93d3cu/aW5zaWRldGhlaW90/LmNvbS93cC1jb250/ZW50L3VwbG9hZHMv/MjAyMC8wNS9tdWx0/aWNvcmUtY2FjaGUu/cG5n][Picture of this]].
+   - Basically, data is loaded into cache lines (of which size depends on the
+     processor - typically 64bytes) when accessed.
+   - (Completely unrelated - slide 13 of [[https://www.aristeia.com/TalkNotes/ACCU2011_CPUCaches.pdf][this]] shows some types of caches).
+   - When a cpu core needs access to data, it will first check the first layer
+     (L1) cache, then the L2, then L3, and then main memory.
+   - Cache misses can be costly, so it's important to be cognisant of your
+     memory allocations to be as cache friendly as possible.
+   - Main takeaway here is that the different levels of caches have different
+     visibility with other cpu cores, thus an operation in one thread running
+     on one core would update the value in it's caches, but until the cache
+     line is synchronized with main memory this change will not be guaranteed
+     to be visible from other threads. This brings us into atomics.
+
+** Atomics
+   - Atomics are objects in which operations performed on them will
+     read/modify/update all in one "atomic" unit.
+   - That is, atomic operations are guaranteed to be done in a single
+     transaction.
+   - For ease of visibility, assume that atomic operations will ensure memory
+     consistency with main memory, but it doesn't need to be bubble up to main
+     memory. (Instead they may be only guaranteeing visibility to each core's
+     caches).
+   - At the lowest level, atomic operations are special instructions given to
+     hardware (usually prefixed with ~lock~ in x86 assembly).
+   - What the ~lock~ (it's called an instruction prefix) does is guarantee the
+     CPU core has exclusive ownership of the appropriate cache line for the
+     duration of the operation. [[https://stackoverflow.com/questions/8891067/what-does-the-lock-instruction-mean-in-x86-assembly][See here]].
+   - It's important to recognize that exclusive access is granted to the cache
+     line itself, so if you have two threads operating on two atomics on the
+     same cache line this could impact performance as they would both have to
+     "wait" for each other (still false sharing).
+   - The hardware is what guarantees the atomicity.
+
+*** Performance of atomics
+
+** Memory Barriers (and Memory Order)
+*** Store buffer and Invalidation Queue
+*** Intentionality
